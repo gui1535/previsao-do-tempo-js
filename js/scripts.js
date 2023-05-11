@@ -1,54 +1,77 @@
-// VARIÁVEIS => Um espaço da memória do computador que guardamos algo (um numero, uma letra, um texto, uma imagem)
-// FUNÇÃO => Um trecho de código que só é executado quando é chamado
+const container = document.querySelector('.container');
+const search = document.querySelector('.search-box button');
+const climaBox = document.querySelector('.clima-box');
+const climaDetalhes = document.querySelector('.clima-detalhes');
+const error404 = document.querySelector('.not-found');
 
-let chave = "cebcd482eda57fa9a6714c1c2ba91885"
-let formSearch = document.getElementById("form-search-cidade");
+search.addEventListener('click', () => {
 
-function mostrarPrevisao(dados) {
-    document.querySelector(".cidade").innerHTML = "Tempo em " + dados.name
-    document.querySelector(".temp").innerHTML = Math.floor(dados.main.temp) + "°C"
-    document.querySelector(".descricao").innerHTML = dados.weather[0].description
-    document.querySelector(".icone").src = "https://openweathermap.org/img/wn/" + dados.weather[0].icon + ".png"
-}
+    const APIKey = 'cebcd482eda57fa9a6714c1c2ba91885';
+    const city = document.querySelector('.search-box input').value;
 
-function cidadeNaoEncontrada() {
-    Swal.fire({
-        icon: 'question',
-        title: 'Ops...',
-        text: 'Cidade não encontrada',
-    })
-}
-
-function cidadeNaoDigitada() {
-    Swal.fire({
-        icon: 'error',
-        title: "Campo obrigatório",
-        text: 'Informe a cidade para procurar a previsão do tempo',
-    })
-}
-async function buscarCidade(cidade) {
-    let dados = await fetch("https://api.openweathermap.org/data/2.5/weather?q=" +
-        cidade +
-        "&appid=" +
-        chave +
-        "&lang=pt_br" +
-        "&units=metric"
-    )
-        .then(resposta => resposta.json())
-    console.log(dados)
-    if (dados.cod != '404') {
-        mostrarPrevisao(dados)
-    } else {
-        cidadeNaoEncontrada();
-    }
-}
-
-formSearch.addEventListener("submit", function (event) {
-    event.preventDefault();
-    let cidade = document.querySelector(".input-cidade").value
-    if (!cidade) {
-        cidadeNaoDigitada()
+    if (city === '')
         return;
-    }
-    buscarCidade(cidade)
+
+    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${APIKey}&lang=pt`)
+        .then(response => response.json())
+        .then(json => {
+
+            if (json.cod === '404') {
+                container.style.height = '400px';
+                climaBox.style.display = 'none';
+                climaDetalhes.style.display = 'none';
+                error404.style.display = 'block';
+                error404.classList.add('fadeIn');
+                return;
+            }
+
+            error404.style.display = 'none';
+            error404.classList.remove('fadeIn');
+
+            const image = document.querySelector('.clima-box img');
+            const temperatura = document.querySelector('.clima-box .temperatura');
+            const descricao = document.querySelector('.clima-box .descricao');
+            const umidade = document.querySelector('.clima-detalhes .umidade span');
+            const vento = document.querySelector('.clima-detalhes .vento span');
+
+            switch (json.weather[0].main) {
+                case 'Clear':
+                    image.src = 'images/clear.png';
+                    break;
+
+                case 'Rain':
+                    image.src = 'images/rain.png';
+                    break;
+
+                case 'Snow':
+                    image.src = 'images/snow.png';
+                    break;
+
+                case 'Clouds':
+                    image.src = 'images/cloud.png';
+                    break;
+
+                case 'Haze':
+                    image.src = 'images/mist.png';
+                    break;
+
+                default:
+                    image.src = '';
+            }
+
+            temperatura.innerHTML = `${parseInt(json.main.temp)}<span>°C</span>`;
+            descricao.innerHTML = `${json.weather[0].description}`;
+            umidade.innerHTML = `${json.main.humidity}%`;
+            vento.innerHTML = `${parseInt(json.wind.speed)}Km/h`;
+
+            climaBox.style.display = '';
+            climaDetalhes.style.display = '';
+            climaBox.classList.add('fadeIn');
+            climaDetalhes.classList.add('fadeIn');
+            container.style.height = '590px';
+
+
+        });
+
+
 });
